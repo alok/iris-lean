@@ -31,57 +31,51 @@ instance BUpdPlain_ne : NonExpansive (BUpdPlain (PROP := PROP)) where
   ne _ _ _ H := forall_ne fun _ => wand_ne.ne (wand_ne.ne H .rfl) .rfl
 
 theorem BUpdPlain_intro {P : PROP} : P ⊢ BUpdPlain P := by
-  iintro Hp
   unfold BUpdPlain
-  iintro _ H
+  iintro Hp R H
   iapply H
   iexact Hp
 
 theorem BUpdPlain_mono {P Q : PROP} : (P ⊢ Q) → (BUpdPlain P ⊢ BUpdPlain Q) := by
-  intros H
+  intro H
   unfold BUpdPlain
-  iintro R HQR
-  iintro Hp
-  have H1 : ⊢ iprop(Q -∗ ■ HQR) -∗ iprop(P -∗ ■ HQR) := by
-    iintro H
-    iintro Hp
-    iapply H
-    apply H
-  iintro ⟨Ha, H2⟩
-  ispecialize Ha HQR
+  iintro Ha R HQR
+  ispecialize Ha $! R
   iapply Ha
-  iapply H1
-  iexact H2
+  iintro Hp
+  iapply HQR
+  iapply H
+  iexact Hp
 
 theorem BUpdPlain_idemp {P : PROP} : BUpdPlain (BUpdPlain P) ⊢ BUpdPlain P := by
   unfold BUpdPlain
-  iintro Hp R H
-  ispecialize Hp R as HpR
-  iapply HpR
+  iintro Ha R HQR
+  ispecialize Ha $! R
+  iapply Ha
   iintro Hp
-  ispecialize Hp R as HpR2
-  iapply HpR2
-  iassumption
+  ispecialize Hp $! R
+  iapply Hp
+  iexact HQR
 
 theorem BUpdPlain_frame_r {P Q : PROP} : BUpdPlain P ∗ Q ⊢ (BUpdPlain iprop(P ∗ Q)) := by
   unfold BUpdPlain
-  iintro ⟨Hp, Hq⟩ R H
-  ispecialize Hp R as HpR
-  iapply HpR
+  iintro ⟨Ha, Hq⟩ R HQR
+  ispecialize Ha $! R
+  iapply Ha
   iintro Hp
-  iapply H
+  iapply HQR
   isplitl [Hp]
   · iexact Hp
   · iexact Hq
 
 theorem BUpdPlain_plainly {P : PROP} : BUpdPlain iprop(■ P) ⊢ (■ P) := by
   unfold BUpdPlain
-  iintro H
-  ispecialize H P as HP
-  iapply HP
+  iintro Ha
+  ispecialize Ha $! P
+  iapply Ha
   exact wand_rfl
 
-/- BiBUpdPlainly entails the alternative definition -/
+/- BiBUpdatePlainly entails the alternative definition -/
 theorem BUpd_BUpdPlain [BIUpdate PROP] [BIBUpdatePlainly PROP] {P : PROP} : (|==> P) ⊢ BUpdPlain P := by
   unfold BUpdPlain
   iintro _ _ _
@@ -97,14 +91,12 @@ theorem own_updateP [UCMRA M] {own : M → PROP} {x : M} {Φ : M → Prop}
     (x ~~>: Φ) → own x ∗ (∀ y, iprop(⌜Φ y⌝) -∗ own y -∗ ■ R) ⊢ ■ R)
   (Hup : x ~~>: Φ) :
     own x ⊢ BUpdPlain iprop(∃ y, ⌜Φ y⌝ ∧ own y) := by
-  iintro Hx
   unfold BUpdPlain
-  iintro R H
+  iintro Hx R H
   iapply own_updateP_plainly x Φ R Hup
   isplitl [Hx]
   · iexact Hx
-  iintro y ⌜HΦ⌝
-  iintro Hy
+  iintro y ⌜HΦ⌝ Hy
   iapply H
   iexists y
   isplit
