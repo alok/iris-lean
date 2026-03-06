@@ -817,6 +817,18 @@ private theorem iResProject_below_dist {n : Nat} {γ : GName} {z : IResUR GF} {c
   · simpa [zf, hτ, iSingleton_ne_eq_unit (E := E) (F := F) (γ := γ) (v := c) hτ, CMRA.op, optionOp] using
       (CMRA.unit_left_id (x := z τ')).dist.symm
 
+private theorem iResProject_above_dist {n : Nat} {γ : GName} {z : IResUR GF} {c : F.ap (IProp GF)}
+    (h : iSingleton F γ c ≼{n} z) :
+    (some c : Option (F.ap (IProp GF))) ≼{n} iResProject (GF := GF) (F := F) (E := E) γ z := by
+  rcases h with ⟨xf, hxf⟩
+  have hz :
+      iResProject (GF := GF) (F := F) (E := E) γ z ≡{n}≡ some (c •? iResProject γ xf) := by
+    exact (iResProject_dist γ hxf).trans <| (iResProject_iSingleton_op γ c xf).dist
+  have hsome :
+      (some c : Option (F.ap (IProp GF))) ≼{n} some (c •? iResProject γ xf) := by
+    exact Option.some_incN_some_iff_opM.mpr ⟨iResProject γ xf, OFE.Dist.rfl⟩
+  exact (CMRA.incN_iff_right hz.symm).mp hsome
+
 theorem iOwn_forall {B : Sort _} [Inhabited B] (γ : GName) (f : B → F.ap (IProp GF)) :
     (∀ b, iOwn γ (f b)) ⊢ ∃ c, iOwn γ c ∧ ∀ b, ∃ q : Option (F.ap (IProp GF)),
       (UPred.eq c (f b •? q) : IProp GF) := by
@@ -829,11 +841,12 @@ theorem iOwn_forall {B : Sort _} [Inhabited B] (γ : GName) (f : B → F.ap (IPr
   | none =>
       have Hdefault := Hzincl _ ⟨default, rfl⟩
       rcases Hdefault with ⟨P, ⟨xf, rfl⟩, Hxf⟩
-      have hnone : (none : Option (F.ap (IProp GF))) ≡{n}≡ some (f default •? iResProject γ xf) := by
-        exact (OFE.Dist.of_eq hproj.symm).trans <|
-          (iResProject_dist γ Hxf).trans <|
-          (iResProject_iSingleton_op γ (f default) xf).dist
-      exact (not_none_dist_some hnone).elim
+      have habove :
+          (some (f default) : Option (F.ap (IProp GF))) ≼{n} iResProject γ z := by
+        exact iResProject_above_dist (γ := γ) ⟨xf, Hxf⟩
+      have hcontra : False := by
+        simp [hproj, Option.incN_iff] at habove
+      exact hcontra.elim
   | some c =>
       refine ⟨iprop(iOwn γ c ∧ ∀ b, ∃ q : Option (F.ap (IProp GF)), UPred.eq c (f b •? q)), ?_, ?_⟩
       · exists c
@@ -843,12 +856,14 @@ theorem iOwn_forall {B : Sort _} [Inhabited B] (γ : GName) (f : B → F.ap (IPr
           rcases hp with ⟨b, rfl⟩
           have Hb := Hzincl _ ⟨b, rfl⟩
           rcases Hb with ⟨P, ⟨xf, rfl⟩, Hxf⟩
-          refine ⟨iprop(UPred.eq c (f b •? iResProject γ xf)), ?_, ?_⟩
-          · exact ⟨iResProject γ xf, rfl⟩
-          apply some_dist_some.mp
-          exact (OFE.Dist.of_eq hproj.symm).trans <|
-            (iResProject_dist γ Hxf).trans <|
-            (iResProject_iSingleton_op γ (f b) xf).dist
+          have habove :
+              (some (f b) : Option (F.ap (IProp GF))) ≼{n} some c := by
+            simpa [hproj] using
+              (iResProject_above_dist (γ := γ) (z := z) (c := f b) ⟨xf, Hxf⟩)
+          rcases Option.some_incN_some_iff_opM.mp habove with ⟨q, hq⟩
+          refine ⟨iprop(UPred.eq c (f b •? q)), ?_, ?_⟩
+          · exact ⟨q, rfl⟩
+          exact hq
 
 theorem iOwn_and (γ : GName) (a1 a2 : F.ap (IProp GF)) :
     iOwn γ a1 ∧ iOwn γ a2 ⊢
