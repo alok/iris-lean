@@ -56,6 +56,21 @@ example {γ : GName} : token (GF := GF) γ ∗ token γ ⊢ False := by
 
 end ExampleToken
 
+section ExampleGhostVar
+
+variable {Q : Type _} {GF : BundledGFunctors} [UFraction Q] [GhostVarG Q String GF]
+
+example : ⊢ |==> ∃ γ, ghostVar (Q := Q) (A := String) (GF := GF) γ (One.one : Q) "hello" := by
+  exact ghostVar_alloc (GF := GF) (Q := Q) (A := String) "hello"
+
+example {γ : GName} :
+    ghostVar (Q := Q) (A := String) (GF := GF) γ (One.one : Q) "hello" ∗
+      ghostVar γ (One.one : Q) "world" ⊢ ⌜"hello" = "world"⌝ := by
+  refine (ghostVar_valid_2_sep (GF := GF) (Q := Q) (A := String) γ (One.one : Q) (One.one : Q) "hello" "world").trans ?_
+  exact pure_elim' (fun h => pure_intro h.2)
+
+end ExampleGhostVar
+
 /-! Example: a typical separating conjunction -/
 section Example2
 

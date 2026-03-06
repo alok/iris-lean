@@ -116,8 +116,10 @@ Some porting tasks will require other tasks as dependencies, the GitHub issues p
   - [x] Updates
   - [x] Functors
 - [ ] `lib/dfrac_agree.v` 
-  - [ ] Lemmas
-  - [ ] Updates
+  - [x] Core resource + validity lemmas
+  - [x] Updates
+  - [ ] Inclusion lemmas
+  - [ ] Functors
 - [ ] `lib/excl_auth.v` 
   - [ ] Lemmas
   - [ ] Updates
@@ -173,6 +175,11 @@ Some porting tasks will require other tasks as dependencies, the GitHub issues p
 - [ ] `lib/gen_inv_heap.v`
 - [ ] `lib/ghost_map.v`
 - [ ] `lib/ghost_var.v`
+  - [x] Definition
+  - [x] Basic allocation
+  - [x] Agreement + updates
+  - [ ] Strong allocation
+  - [ ] Timeless / fractional proofmode instances
 - [ ] `lib/gset_bij.v`
 - [ ] `lib/invariants.v`
 - [ ] `lib/iprop.v`
@@ -435,4 +442,3 @@ Some porting tasks will require other tasks as dependencies, the GitHub issues p
   - [ ] `language.v`
   - [ ] `ectx_language.v`
   - [ ] `ectxi_language.v`
-
