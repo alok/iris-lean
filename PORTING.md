@@ -192,6 +192,11 @@ Some porting tasks will require other tasks as dependencies, the GitHub issues p
 - [ ] `lib/proph_map.v`
 - [ ] `lib/saved_prop.v`
 - [ ] `lib/token.v`
+  - [x] Definition
+  - [x] Allocation
+  - [x] Exclusivity
+  - [ ] Strong allocation
+  - [ ] Timeless instance
 - [ ] `lib/wsat.v`
 
 ## BI
@@ -430,5 +435,4 @@ Some porting tasks will require other tasks as dependencies, the GitHub issues p
   - [ ] `language.v`
   - [ ] `ectx_language.v`
   - [ ] `ectxi_language.v`
-
 

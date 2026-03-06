@@ -44,6 +44,18 @@ example : ⊢ |==> ∃ (γ0 γ1 : GName) (s0 s1 : String),
 
 end Example1
 
+section ExampleToken
+
+variable {GF : BundledGFunctors} [TokenG GF]
+
+example : ⊢ |==> ∃ γ, token (GF := GF) γ := by
+  exact token_alloc
+
+example {γ : GName} : token (GF := GF) γ ∗ token γ ⊢ False := by
+  exact token_exclusive_2 (GF := GF) γ
+
+end ExampleToken
+
 /-! Example: a typical separating conjunction -/
 section Example2
 
