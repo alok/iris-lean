@@ -26,6 +26,15 @@ example (P Q : IProp FF0) : P ∗ Q ⊢ P := by
   iintro ⟨HP, HQ⟩
   iexact HP
 
+example : UPred.ownM (CMRA.unit : M) ⊣⊢ iprop(True) :=
+  UPred.ownM_unit'
+
+example (a b : M) : UPred.ownM (a • b) ⊢ UPred.ownM a :=
+  UPred.ownM_mono ⟨b, .rfl⟩
+
+example (a : M) [CMRA.CoreId a] : □ UPred.ownM a ⊣⊢ UPred.ownM a :=
+  UPred.intuitionistically_ownM a
+
 end no_resources
 
 section const_agree

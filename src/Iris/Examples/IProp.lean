@@ -78,13 +78,16 @@ notation k:50 " ↦[" γ:50 "] " v:50 => points_to γ k v
 /- In this example, we assume that the setup is complete and a GName has already been
    allocated. -/
 example {γ : GName} : 5 ↦[γ] "A" ∗ 5 ↦[γ] "B" ⊢ False := by
-  refine iOwn_op.mpr.trans ?_
-  refine iOwn_cmraValid.trans ?_
-  refine (UPred.cmraValid_elim _).trans ?_
-  iintro %H
+  refine iOwn_invalid_2 (γ := γ) ?_
+  intro H
   have _ := dist_inj <| toAgree_op_validN_iff_dist.mp <|
     (frag_op_validN_iff.mp H).2
   grind
+
+example {γ : GName} {a1 a2 : F1 (F := F).ap (IProp GF)} : iOwn γ (a1 • a2) ⊢ iOwn γ a1 := by
+  iintro H
+  icases H with ⟨Ha1, _Ha2⟩
+  iexact Ha1
 
 end Example2
 

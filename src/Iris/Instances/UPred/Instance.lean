@@ -427,6 +427,10 @@ theorem ownM_op (m1 m2 : M) : ownM (m1 • m2) ⊣⊢ ownM m1 ∗ ownM m2 := by
 theorem ownM_eqv {m1 m2 : M} (H : m1 ≡ m2) : ownM m1 ⊣⊢ ownM m2 :=
   ⟨fun _ _ _ => (CMRA.incN_iff_left H.dist).mp, fun _ _ _ => (CMRA.incN_iff_left H.dist).mpr⟩
 
+theorem ownM_mono {m1 m2 : M} (H : m1 ≼ m2) : ownM m2 ⊢ ownM m1 := by
+  rcases H with ⟨m, hm⟩
+  exact (ownM_eqv hm.symm).2.trans <| (ownM_op m1 m).1.trans sep_elim_l
+
 theorem ownM_always_invalid_elim (m : M) (H : ∀ n, ¬✓{n} m) : (cmraValid m : UPred M) ⊢ False :=
   fun n _ _ => H n
 
@@ -435,6 +439,12 @@ theorem intuitionistically_ownM_core (m : M) : ownM m ⊢ □ ownM (CMRA.core m)
 
 theorem ownM_unit P : P ⊢ □ ownM (CMRA.unit : M) :=
   fun _ _ _ _ => ⟨trivial, CMRA.incN_unit⟩
+
+theorem ownM_invalid (m : M) (H : ¬✓{0} m) : ownM m ⊢ False :=
+  fun n _ Hv Hm => H <| CMRA.validN_of_le (Nat.zero_le n) <| Hm.validN Hv
+
+theorem ownM_unit' : ownM (CMRA.unit : M) ⊣⊢ iprop(True) :=
+  ⟨true_intro, (ownM_unit (P := iprop(True))).trans intuitionistically_elim⟩
 
 theorem cmra_valid_intro P [CMRA A] (a : A) : ✓ a → P ⊢ (cmraValid a : UPred M) :=
   fun Hv _ _ _ _ => CMRA.Valid.validN Hv
@@ -460,6 +470,10 @@ theorem later_soundness : iprop(True ⊢ ▷ P) → iprop((True : UPred M) ⊢ P
 theorem persistently_ownM_core (a : M) : ownM a ⊢ <pers> ownM (CMRA.core a) :=
   fun _ _ _ H => CMRA.core_incN_core H
 
+instance {a : M} [CMRA.CoreId a] : Persistent (ownM a : UPred M) where
+  persistent := (persistently_ownM_core a).trans <|
+    persistently_mono <| (ownM_eqv <| CMRA.core_eqv_self a).1
+
 instance : Persistent (ownM (CMRA.core a) : UPred M) where
   persistent := by
     refine .trans (persistently_ownM_core _) ?_
@@ -481,6 +495,17 @@ theorem bupd_ownM_updateP (x : M) (Φ : M → Prop) :
   · exact ⟨HΦy, CMRA.incN_op_left k y x3⟩
 
 -- TODO: later_ownM, ownM_forall (needs internal eq)
+
+theorem bupd_ownM_update (x y : M) :
+    (x ~~> y) → ownM x ⊢ |==> ownM y := by
+  intro Hup
+  refine (bupd_ownM_updateP x (y = ·) <| UpdateP.of_update Hup).trans ?_
+  refine BIUpdate.mono ?_
+  refine exists_elim fun y' => ?_
+  refine and_comm.1.trans <| imp_elim' <| pure_elim' ?_
+  intro hy
+  subst hy
+  exact imp_intro and_elim_r
 
 theorem cmraValid_intro [CMRA A] {P : UPred M} (a : A) (Ha : ✓ a) : P ⊢ cmraValid a :=
   fun _ _ _ _ => CMRA.Valid.validN Ha
@@ -505,7 +530,14 @@ instance [CMRA A] {a : A} : Persistent (UPred.cmraValid a : UPred M) where
 
 instance : BIAffine (UPred M) := ⟨by infer_instance⟩
 
--- TODO: Port derived lemmas
+theorem intuitionistically_ownM (a : M) [CMRA.CoreId a] : □ ownM a ⊣⊢ ownM a :=
+  ⟨intuitionistically_elim, persistent.trans intuitionistically_iff_persistently.2⟩
+
+theorem bupd_soundness {P : UPred M} [Plain P] : (⊢ |==> P) → ⊢ P :=
+  (·.trans bupd_elim)
+
+theorem consistency : ¬(⊢@{UPred M} False) :=
+  pure_soundness
 
 end UPred
 

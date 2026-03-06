@@ -521,11 +521,30 @@ theorem iOwn_cmraValid {a : F.ap (IProp GF)} : iOwn γ a ⊢ UPred.cmraValid a :
 theorem iOwn_cmraValid_op {a1 a2 : F.ap (IProp GF)} : iOwn γ a1 ∗ iOwn γ a2 ⊢ UPred.cmraValid (a1 • a2) :=
   iOwn_op.mpr.trans iOwn_cmraValid
 
+theorem iOwn_cmraValid_op3 {a1 a2 a3 : F.ap (IProp GF)} :
+    (iOwn γ a1 ∗ iOwn γ a2) ∗ iOwn γ a3 ⊢ UPred.cmraValid ((a1 • a2) • a3) :=
+  (sep_mono_l iOwn_op.mpr).trans iOwn_cmraValid_op
+
 theorem iOwn_valid_r {a : F.ap (IProp GF)} : iOwn γ a ⊢ iOwn γ a ∗ UPred.cmraValid a :=
   BI.persistent_entails_l iOwn_cmraValid
 
 theorem iOwn_valid_l {a : F.ap (IProp GF)} : iOwn γ a ⊢ UPred.cmraValid a ∗ iOwn γ a :=
   BI.persistent_entails_r iOwn_cmraValid
+
+theorem iOwn_valid_2 {a1 a2 : F.ap (IProp GF)} :
+    ⊢ iOwn γ a1 -∗ iOwn γ a2 -∗ UPred.cmraValid (a1 • a2) :=
+  entails_wand <| wand_intro iOwn_cmraValid_op
+
+theorem iOwn_valid_3 {a1 a2 a3 : F.ap (IProp GF)} :
+    ⊢ iOwn γ a1 -∗ iOwn γ a2 -∗ iOwn γ a3 -∗ UPred.cmraValid ((a1 • a2) • a3) :=
+  entails_wand <| wand_intro <| wand_intro iOwn_cmraValid_op3
+
+theorem iOwn_invalid {a : F.ap (IProp GF)} (H : ¬✓{0} a) : iOwn γ a ⊢ False :=
+  iOwn_cmraValid.trans <| (UPred.cmraValid_elim _).trans <| pure_elim' (fun h => pure_intro (H h))
+
+theorem iOwn_invalid_2 {a1 a2 : F.ap (IProp GF)} (H : ¬✓{0} (a1 • a2)) :
+    iOwn γ a1 ∗ iOwn γ a2 ⊢ False :=
+  iOwn_cmraValid_op.trans <| (UPred.cmraValid_elim _).trans <| pure_elim' (fun h => pure_intro (H h))
 
 instance {a : F.ap (IProp GF)} [CMRA.CoreId a] : BI.Persistent (iOwn γ a) where
   persistent := by
