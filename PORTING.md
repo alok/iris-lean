@@ -119,7 +119,7 @@ Some porting tasks will require other tasks as dependencies, the GitHub issues p
   - [x] Core resource + validity lemmas
   - [x] Updates
   - [ ] Inclusion lemmas
-  - [ ] Functors
+  - [x] Functors
 - [ ] `lib/excl_auth.v` 
   - [ ] Lemmas
   - [ ] Updates
