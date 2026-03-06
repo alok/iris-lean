@@ -830,8 +830,7 @@ private theorem iResProject_above_dist {n : Nat} {γ : GName} {z : IResUR GF} {c
   exact (CMRA.incN_iff_right hz.symm).mp hsome
 
 theorem iOwn_forall {B : Sort _} [Inhabited B] (γ : GName) (f : B → F.ap (IProp GF)) :
-    (∀ b, iOwn γ (f b)) ⊢ ∃ c, iOwn γ c ∧ ∀ b, ∃ q : Option (F.ap (IProp GF)),
-      (UPred.eq c (f b •? q) : IProp GF) := by
+    (∀ b, iOwn γ (f b)) ⊢ ∃ c, iOwn γ c ∧ ∀ b, UPred.cmraIncluded (some (f b)) (some c) := by
   intro n x Hv Hf
   have Hforall :=
     (UPred.ownM_forall (M := IResUR GF) (f := fun b => iSingleton F γ (f b))) n x Hv Hf
@@ -848,7 +847,7 @@ theorem iOwn_forall {B : Sort _} [Inhabited B] (γ : GName) (f : B → F.ap (IPr
         simp [hproj, Option.incN_iff] at habove
       exact hcontra.elim
   | some c =>
-      refine ⟨iprop(iOwn γ c ∧ ∀ b, ∃ q : Option (F.ap (IProp GF)), UPred.eq c (f b •? q)), ?_, ?_⟩
+      refine ⟨iprop(iOwn γ c ∧ ∀ b, UPred.cmraIncluded (some (f b)) (some c)), ?_, ?_⟩
       · exists c
       · constructor
         · exact CMRA.incN_trans (iResProject_below_dist (γ := γ) hproj) Hzown
@@ -856,21 +855,15 @@ theorem iOwn_forall {B : Sort _} [Inhabited B] (γ : GName) (f : B → F.ap (IPr
           rcases hp with ⟨b, rfl⟩
           have Hb := Hzincl _ ⟨b, rfl⟩
           rcases Hb with ⟨P, ⟨xf, rfl⟩, Hxf⟩
-          have habove :
-              (some (f b) : Option (F.ap (IProp GF))) ≼{n} some c := by
-            simpa [hproj] using
-              (iResProject_above_dist (γ := γ) (z := z) (c := f b) ⟨xf, Hxf⟩)
-          rcases Option.some_incN_some_iff_opM.mp habove with ⟨q, hq⟩
-          refine ⟨iprop(UPred.eq c (f b •? q)), ?_, ?_⟩
-          · exact ⟨q, rfl⟩
-          exact hq
+          simpa [UPred.cmraIncluded, hproj] using
+            (iResProject_above_dist (γ := γ) (z := z) (c := f b) ⟨xf, Hxf⟩)
 
 theorem iOwn_and (γ : GName) (a1 a2 : F.ap (IProp GF)) :
     iOwn γ a1 ∧ iOwn γ a2 ⊢
       ∃ c : F.ap (IProp GF),
         iOwn γ c ∧
-          (∃ q1 : Option (F.ap (IProp GF)), (UPred.eq c (a1 •? q1) : IProp GF)) ∧
-          ∃ q2 : Option (F.ap (IProp GF)), (UPred.eq c (a2 •? q2) : IProp GF) := by
+          UPred.cmraIncluded (some a1) (some c) ∧
+          UPred.cmraIncluded (some a2) (some c) := by
   let f : Bool → F.ap (IProp GF) := fun b => if b then a1 else a2
   have hforall : iOwn γ a1 ∧ iOwn γ a2 ⊢ ∀ (b : Bool), iOwn γ (f b) := by
     refine (and_forall_bool.1).trans ?_
@@ -881,15 +874,13 @@ theorem iOwn_and (γ : GName) (a1 a2 : F.ap (IProp GF)) :
   exact hforall.trans <| (iOwn_forall (γ := γ) (f := f)).trans <|
     BI.exists_elim fun c =>
       let Ψ : Bool → IProp GF := fun b =>
-        ∃ q : Option (F.ap (IProp GF)), (UPred.eq c (f b •? q) : IProp GF)
+        UPred.cmraIncluded (some (f b)) (some c)
       let hleft :
-          «forall» Ψ ⊢
-            ∃ q : Option (F.ap (IProp GF)), (UPred.eq c (a1 •? q) : IProp GF) := by
+          «forall» Ψ ⊢ UPred.cmraIncluded (some a1) (some c) := by
             simpa [f] using
               (BI.forall_elim (PROP := IProp GF) (Ψ := Ψ) true)
       let hright :
-          «forall» Ψ ⊢
-            ∃ q : Option (F.ap (IProp GF)), (UPred.eq c (a2 •? q) : IProp GF) := by
+          «forall» Ψ ⊢ UPred.cmraIncluded (some a2) (some c) := by
             simpa [f] using
               (BI.forall_elim (PROP := IProp GF) (Ψ := Ψ) false)
       BI.exists_intro' c <|
@@ -899,8 +890,7 @@ theorem iOwn_and (γ : GName) (a1 a2 : F.ap (IProp GF)) :
 theorem iOwn_forall_pred {B : Type _} (γ : GName) (φ : B → Prop) (f : B → F.ap (IProp GF))
     (hφ : ∃ b, φ b) :
     (∀ b, ⌜φ b⌝ → iOwn γ (f b)) ⊢
-      ∃ c, iOwn γ c ∧ ∀ b, ⌜φ b⌝ → ∃ q : Option (F.ap (IProp GF)),
-        (UPred.eq c (f b •? q) : IProp GF) := by
+      ∃ c, iOwn γ c ∧ ∀ b, ⌜φ b⌝ → UPred.cmraIncluded (some (f b)) (some c) := by
   rcases hφ with ⟨b0, hb0⟩
   letI : Inhabited { b : B // φ b } := ⟨⟨b0, hb0⟩⟩
   let G : { b : B // φ b } → IProp GF := fun s => iOwn γ (f s.1)
@@ -911,7 +901,7 @@ theorem iOwn_forall_pred {B : Type _} (γ : GName) (φ : B → Prop) (f : B → 
   exact hsub.trans <| (iOwn_forall (γ := γ) (f := fun s : { b : B // φ b } => f s.1)).trans <|
     BI.exists_elim fun c =>
       let Ψ : { b : B // φ b } → IProp GF := fun s =>
-        ∃ q : Option (F.ap (IProp GF)), (UPred.eq c (f s.1 •? q) : IProp GF)
+        UPred.cmraIncluded (some (f s.1)) (some c)
       BI.exists_intro' c <|
         BI.and_intro BI.and_elim_l <|
           BI.forall_intro fun b =>
@@ -921,6 +911,42 @@ theorem iOwn_forall_pred {B : Type _} (γ : GName) (φ : B → Prop) (f : B → 
                   by
                     simpa [Ψ] using
                       (BI.forall_elim (PROP := IProp GF) (Ψ := Ψ) ⟨b, hb⟩)
+
+theorem iOwn_forall_total {B : Sort _} [Inhabited B] [CMRA.IsTotal (F.ap (IProp GF))]
+    (γ : GName) (f : B → F.ap (IProp GF)) :
+    (∀ b, iOwn γ (f b)) ⊢ ∃ c, iOwn γ c ∧ ∀ b, UPred.cmraIncluded (f b) c := by
+  exact (iOwn_forall (γ := γ) (f := f)).trans <|
+    BI.exists_elim fun c =>
+      BI.exists_intro' c <|
+        BI.and_intro BI.and_elim_l <|
+          BI.and_elim_r.trans <|
+            BI.forall_mono fun b =>
+              (UPred.cmraIncluded_some_iff_isTotal (M := IResUR GF) (a := f b) (b := c)).1
+
+theorem iOwn_and_total [CMRA.IsTotal (F.ap (IProp GF))] (γ : GName) (a1 a2 : F.ap (IProp GF)) :
+    iOwn γ a1 ∧ iOwn γ a2 ⊢
+      ∃ c : F.ap (IProp GF), iOwn γ c ∧ UPred.cmraIncluded a1 c ∧ UPred.cmraIncluded a2 c := by
+  exact (iOwn_and (γ := γ) (a1 := a1) (a2 := a2)).trans <|
+    BI.exists_elim fun c =>
+      BI.exists_intro' c <|
+        BI.and_intro BI.and_elim_l <|
+          BI.and_intro
+            ((BI.and_elim_r.trans BI.and_elim_l).trans <|
+              (UPred.cmraIncluded_some_iff_isTotal (M := IResUR GF) (a := a1) (b := c)).1)
+            ((BI.and_elim_r.trans BI.and_elim_r).trans <|
+              (UPred.cmraIncluded_some_iff_isTotal (M := IResUR GF) (a := a2) (b := c)).1)
+
+theorem iOwn_forall_pred_total {B : Type _} [CMRA.IsTotal (F.ap (IProp GF))]
+    (γ : GName) (φ : B → Prop) (f : B → F.ap (IProp GF)) (hφ : ∃ b, φ b) :
+    (∀ b, ⌜φ b⌝ → iOwn γ (f b)) ⊢
+      ∃ c, iOwn γ c ∧ ∀ b, ⌜φ b⌝ → UPred.cmraIncluded (f b) c := by
+  exact (iOwn_forall_pred (γ := γ) (φ := φ) (f := f) hφ).trans <|
+    BI.exists_elim fun c =>
+      BI.exists_intro' c <|
+        BI.and_intro BI.and_elim_l <|
+          BI.and_elim_r.trans <|
+            BI.forall_mono fun b =>
+              imp_mono .rfl (UPred.cmraIncluded_some_iff_isTotal (M := IResUR GF) (a := f b) (b := c)).1
 
 end iOwn
 end Iris

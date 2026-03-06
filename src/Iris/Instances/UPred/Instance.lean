@@ -117,6 +117,10 @@ def cmraValid [CMRA A] (a : A) : UPred M where
 instance [CMRA A] : OFE.NonExpansive (cmraValid : A → UPred M) where
   ne _ _ _ H _ _ Hn _ := (H.le Hn).validN
 
+def cmraIncluded [CMRA A] (a b : A) : UPred M where
+  holds n _ := a ≼{n} b
+  mono hab _ hle := CMRA.incN_of_incN_le hle hab
+
 def bupd (Q : UPred M) : UPred M where
   holds n x := ∀ k yf, k ≤ n → ✓{k} (x • yf) → ∃ x', ✓{k} (x' • yf) ∧ Q k x'
   mono {n1 n2} {x1 x2} HQ := by
@@ -551,8 +555,24 @@ theorem cmraValid_entails [CMRA A] [CMRA B] {a : A} {b : B} (Hv : ∀ n, ✓{n} 
     (cmraValid a : UPred M) ⊢ cmraValid b :=
   fun _ _ _ H => Hv _ H
 
+theorem cmraIncluded_intro [CMRA A] {P : UPred M} (a b : A) (Hab : a ≼ b) :
+    P ⊢ cmraIncluded a b :=
+  fun _ _ _ _ => Hab.incN
+
+theorem cmraIncluded_elim [CMRA A] [CMRA.Discrete A] (a b : A) :
+    (cmraIncluded a b : UPred M) ⊢ iprop(⌜ a ≼ b ⌝) :=
+  fun n _ _ H => (CMRA.inc_iff_incN 0).2 <| CMRA.incN_of_incN_le n.zero_le H
+
+theorem cmraIncluded_some_iff_isTotal [CMRA A] [CMRA.IsTotal A] (a b : A) :
+    (cmraIncluded (some a) (some b) : UPred M) ⊣⊢ cmraIncluded a b :=
+  ⟨fun _ _ _ H => Option.some_incN_some_iff_isTotal.mp H,
+   fun _ _ _ H => Option.some_incN_some_iff_isTotal.mpr H⟩
+
 instance [CMRA A] {a : A} : Persistent (UPred.cmraValid a : UPred M) where
   persistent := fun _ _ _ a => a
+
+instance [CMRA A] {a b : A} : Persistent (UPred.cmraIncluded a b : UPred M) where
+  persistent := fun _ _ _ h => h
 
 instance : BIAffine (UPred M) := ⟨by infer_instance⟩
 
