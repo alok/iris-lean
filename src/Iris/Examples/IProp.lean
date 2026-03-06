@@ -89,6 +89,20 @@ example {γ : GName} {a1 a2 : F1 (F := F).ap (IProp GF)} : iOwn γ (a1 • a2) �
   icases H with ⟨Ha1, _Ha2⟩
   iexact Ha1
 
+example {γ : GName} (s0 s1 : String) :
+    (∀ (b : Bool), iOwn (F := F1 (F := F)) γ
+      (Frag 5 (own one) (toAgree (α := LeibnizO String) ⟨if b then s0 else s1⟩))) ⊢
+      ∃ c : F1 (F := F).ap (IProp GF), iOwn (F := F1 (F := F)) γ c := by
+  iintro Hall
+  ihave Hforall :=
+    iOwn_forall (GF := GF) (F := F1 (F := F)) (γ := γ) (f := fun b : Bool =>
+      (Frag 5 (own one) (toAgree (α := LeibnizO String) ⟨if b then s0 else s1⟩) :
+        F1 (F := F).ap (IProp GF))) $$ Hall
+  icases Hforall with ⟨%c, Htail⟩
+  ihave Hc := (BI.and_elim_l (PROP := IProp GF)) $$ Htail
+  iexists c
+  iexact Hc
+
 end Example2
 
 /-! Example: a typical step-indexed weakest precondition -/

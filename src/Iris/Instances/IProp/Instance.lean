@@ -724,5 +724,131 @@ theorem iOwn_unit {γ} {ε : F.ap (IProp GF)} [Hε : IsUnit ε] : ⊢ |==> iOwn 
     rintro rfl
     exact BI.and_elim_r
 
+private def iResProject (γ : GName) (x : IResUR GF) : Option (F.ap (IProp GF)) :=
+  ((x E.τ).car γ).map (E.unbundle ∘ IProp.foldi.f)
+
+private theorem iResProject_dist {n : Nat} (γ : GName) {x y : IResUR GF} (h : x ≡{n}≡ y) :
+    iResProject (GF := GF) (F := F) (E := E) γ x ≡{n}≡ iResProject γ y := by
+  have hγ := h E.τ γ
+  rcases hx : (x E.τ).car γ with (_ | xγ) <;> rcases hy : (y E.τ).car γ with (_ | yγ)
+  · simp [iResProject, hx, hy]
+  · simp [hx, hy] at hγ
+  · simp [hx, hy] at hγ
+  · simp [iResProject, hx, hy] at hγ ⊢
+    exact NonExpansive.ne <| NonExpansive.ne hγ
+
+private theorem iResProject_op (γ : GName) (x y : IResUR GF) :
+    iResProject (GF := GF) (F := F) (E := E) γ (x • y) ≡ iResProject γ x • iResProject γ y := by
+  rcases hx : (x E.τ).car γ with (_ | xγ) <;> rcases hy : (y E.τ).car γ with (_ | yγ)
+  · simp [iResProject, hx, hy, CMRA.op, optionOp]
+  · simp [iResProject, hx, hy, CMRA.op, optionOp]
+  · simp [iResProject, hx, hy, CMRA.op, optionOp]
+  · simp [iResProject, hx, hy, CMRA.op, optionOp, some_eqv_some]
+    calc
+      E.unbundle (IProp.foldi.f (xγ • yγ))
+        ≡ E.unbundle (IProp.foldi.f xγ • IProp.foldi.f yγ) :=
+          NonExpansive.eqv (IProp.foldi_op xγ yγ)
+      _ ≡ E.unbundle (IProp.foldi.f xγ) • E.unbundle (IProp.foldi.f yγ) :=
+          unbundle_op (IProp.foldi.f xγ) (IProp.foldi.f yγ)
+
+private theorem iResProject_singleton (γ : GName) (a : F.ap (IProp GF)) :
+    iResProject (GF := GF) (F := F) (E := E) γ (iSingleton F γ a) ≡ some a := by
+  simp [iResProject, iSingleton, GenMap.singleton_map_in, some_eqv_some]
+  calc
+    E.unbundle (IProp.foldi.f (IProp.unfoldi.f (E.bundle a)))
+      ≡ E.unbundle (E.bundle a) := NonExpansive.eqv (IProp.foldi_unfoldi (E.bundle a))
+    _ ≡ a := ElemG.unbundle_bundle E a
+
+private theorem iResProject_iSingleton_op (γ : GName) (a : F.ap (IProp GF)) (xf : IResUR GF) :
+    iResProject (GF := GF) (F := F) (E := E) γ ((iSingleton F γ a) • xf) ≡
+      some (a •? iResProject γ xf) := by
+  calc
+    iResProject γ ((iSingleton F γ a) • xf)
+      ≡ ((iResProject γ (iSingleton F γ a) : Option (F.ap (IProp GF))) • iResProject γ xf) :=
+        iResProject_op γ _ _
+    _ ≡ ((some a : Option (F.ap (IProp GF))) • iResProject γ xf) := (iResProject_singleton γ a).op_l
+    _ ≡ some (a •? iResProject γ xf) := by
+        exact OFE.Equiv.of_eq (Option.some_op_opM (a := a) (ma := iResProject γ xf))
+
+private theorem iResProject_below_dist {n : Nat} {γ : GName} {z : IResUR GF} {c : F.ap (IProp GF)}
+    (h : iResProject (GF := GF) (F := F) (E := E) γ z = some c) :
+    iSingleton F γ c ≼{n} z := by
+  let zf : IResUR GF := fun τ =>
+    if hτ : τ = E.τ then hτ ▸ (z E.τ).alter γ none else z τ
+  refine ⟨zf, ?_⟩
+  intro τ'
+  by_cases hτ : τ' = E.τ
+  · subst hτ
+    calc
+      z E.τ
+        ≡{n}≡ ((z E.τ).alter γ none).alter γ (some (IProp.unfoldi.f (E.bundle c))) := by
+            intro γ'
+            by_cases hγ : γ' = γ
+            · subst hγ
+              rcases hz : (z E.τ).car γ' with (_ | zγ)
+              · simp [iResProject, hz] at h
+              · have hc : E.unbundle (IProp.foldi.f zγ) = c := by
+                  simpa [iResProject, hz] using h
+                have hzγ : IProp.unfoldi.f (E.bundle c) ≡ zγ := by
+                  calc
+                    IProp.unfoldi.f (E.bundle c)
+                      ≡ IProp.unfoldi.f (E.bundle (E.unbundle (IProp.foldi.f zγ))) := by
+                          simp [hc]
+                    _ ≡ IProp.unfoldi.f (IProp.foldi.f zγ) :=
+                        NonExpansive.eqv (ElemG.bundle_unbundle E (IProp.foldi.f zγ))
+                    _ ≡ zγ := IProp.unfoldi_foldi zγ
+                simpa [GenMap.alter, Iris.alter, hz] using (some_dist_some.mpr hzγ.dist).symm
+            · have hγ' : γ ≠ γ' := fun hEq => hγ hEq.symm
+              simp [GenMap.alter, Iris.alter, hγ']
+      _ ≡{n}≡ ((iSingleton F γ c) • zf) E.τ := by
+            have hop :
+                (GenMap.singleton γ (IProp.unfoldi.f (E.bundle c)) • (z E.τ).alter γ none) ≡
+                  ((z E.τ).alter γ none).alter γ (some (IProp.unfoldi.f (E.bundle c))) :=
+              (GenMap.op_singleton_comm
+                (α := GName) (β := GF.api E.τ (IPre GF))
+                (mf := (z E.τ).alter γ none) (x := γ)
+                (y := IProp.unfoldi.f (E.bundle c)))
+                (by simp [IsFree, GenMap.alter, Iris.alter])
+            have htarget :
+                (GenMap.singleton γ (IProp.unfoldi.f (E.bundle c)) • (z E.τ).alter γ none) ≡{n}≡
+                  ((iSingleton F γ c) • zf) E.τ := by
+              simp [zf, iSingleton, CMRA.op]
+            exact hop.dist.symm.trans htarget
+  · simpa [zf, hτ, iSingleton_ne_eq_unit (E := E) (F := F) (γ := γ) (v := c) hτ, CMRA.op, optionOp] using
+      (CMRA.unit_left_id (x := z τ')).dist.symm
+
+theorem iOwn_forall {B : Sort _} [Inhabited B] (γ : GName) (f : B → F.ap (IProp GF)) :
+    (∀ b, iOwn γ (f b)) ⊢ ∃ c, iOwn γ c ∧ ∀ b, ∃ q : Option (F.ap (IProp GF)),
+      (UPred.eq c (f b •? q) : IProp GF) := by
+  intro n x Hv Hf
+  have Hforall :=
+    (UPred.ownM_forall (M := IResUR GF) (f := fun b => iSingleton F γ (f b))) n x Hv Hf
+  rcases Hforall with ⟨P, ⟨z, rfl⟩, Hz⟩
+  rcases Hz with ⟨Hzown, Hzincl⟩
+  cases hproj : iResProject (GF := GF) (F := F) (E := E) γ z with
+  | none =>
+      have Hdefault := Hzincl _ ⟨default, rfl⟩
+      rcases Hdefault with ⟨P, ⟨xf, rfl⟩, Hxf⟩
+      have hnone : (none : Option (F.ap (IProp GF))) ≡{n}≡ some (f default •? iResProject γ xf) := by
+        exact (OFE.Dist.of_eq hproj.symm).trans <|
+          (iResProject_dist γ Hxf).trans <|
+          (iResProject_iSingleton_op γ (f default) xf).dist
+      exact (not_none_dist_some hnone).elim
+  | some c =>
+      refine ⟨iprop(iOwn γ c ∧ ∀ b, ∃ q : Option (F.ap (IProp GF)), UPred.eq c (f b •? q)), ?_, ?_⟩
+      · exists c
+      · constructor
+        · exact CMRA.incN_trans (iResProject_below_dist (γ := γ) hproj) Hzown
+        · intro p hp
+          rcases hp with ⟨b, rfl⟩
+          have Hb := Hzincl _ ⟨b, rfl⟩
+          rcases Hb with ⟨P, ⟨xf, rfl⟩, Hxf⟩
+          refine ⟨iprop(UPred.eq c (f b •? iResProject γ xf)), ?_, ?_⟩
+          · exact ⟨iResProject γ xf, rfl⟩
+          apply some_dist_some.mp
+          exact (OFE.Dist.of_eq hproj.symm).trans <|
+            (iResProject_dist γ Hxf).trans <|
+            (iResProject_iSingleton_op γ (f b) xf).dist
+
 end iOwn
 end Iris
