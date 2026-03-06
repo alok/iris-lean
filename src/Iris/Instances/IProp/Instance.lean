@@ -948,5 +948,46 @@ theorem iOwn_forall_pred_total {B : Type _} [CMRA.IsTotal (F.ap (IProp GF))]
             BI.forall_mono fun b =>
               imp_mono .rfl (UPred.cmraIncluded_some_iff_isTotal (M := IResUR GF) (a := f b) (b := c)).1
 
+theorem iOwn_and_discrete_total [CMRA.Discrete (F.ap (IProp GF))] [CMRA.IsTotal (F.ap (IProp GF))]
+    (γ : GName) (a1 a2 c : F.ap (IProp GF))
+    (Hincl : ∀ c', ✓ c' → a1 ≼ c' → a2 ≼ c' → c ≼ c') :
+    iOwn γ a1 ∧ iOwn γ a2 ⊢ iOwn γ c := by
+  refine (iOwn_and_total (γ := γ) (a1 := a1) (a2 := a2)).trans <|
+    BI.exists_elim fun c' => ?_
+  let hvalid :
+      iOwn γ c' ∧ UPred.cmraIncluded a1 c' ∧ UPred.cmraIncluded a2 c' ⊢ ⌜✓{0} c'⌝ :=
+    BI.and_elim_l.trans <| iOwn_cmraValid.trans <| UPred.cmraValid_elim c'
+  let ha1 :
+      iOwn γ c' ∧ UPred.cmraIncluded a1 c' ∧ UPred.cmraIncluded a2 c' ⊢ ⌜a1 ≼ c'⌝ :=
+    (BI.and_elim_r.trans BI.and_elim_l).trans <| UPred.cmraIncluded_elim a1 c'
+  let ha2 :
+      iOwn γ c' ∧ UPred.cmraIncluded a1 c' ∧ UPred.cmraIncluded a2 c' ⊢ ⌜a2 ≼ c'⌝ :=
+    (BI.and_elim_r.trans BI.and_elim_r).trans <| UPred.cmraIncluded_elim a2 c'
+  refine BI.pure_elim (✓{0} c') hvalid fun hv0 => ?_
+  refine BI.pure_elim (a1 ≼ c') ha1 fun h1 => ?_
+  refine BI.pure_elim (a2 ≼ c') ha2 fun h2 => ?_
+  exact BI.and_elim_l.trans <| iOwn_mono (γ := γ) (Hincl c' (CMRA.discrete_valid hv0) h1 h2)
+
+theorem iOwn_and_discrete_total_false
+    [CMRA.Discrete (F.ap (IProp GF))] [CMRA.IsTotal (F.ap (IProp GF))]
+    (γ : GName) (a1 a2 : F.ap (IProp GF))
+    (Hincl : ∀ c', ✓ c' → a1 ≼ c' → a2 ≼ c' → False) :
+    iOwn γ a1 ∧ iOwn γ a2 ⊢ False := by
+  refine (iOwn_and_total (γ := γ) (a1 := a1) (a2 := a2)).trans <|
+    BI.exists_elim fun c' => ?_
+  let hvalid :
+      iOwn γ c' ∧ UPred.cmraIncluded a1 c' ∧ UPred.cmraIncluded a2 c' ⊢ ⌜✓{0} c'⌝ :=
+    BI.and_elim_l.trans <| iOwn_cmraValid.trans <| UPred.cmraValid_elim c'
+  let ha1 :
+      iOwn γ c' ∧ UPred.cmraIncluded a1 c' ∧ UPred.cmraIncluded a2 c' ⊢ ⌜a1 ≼ c'⌝ :=
+    (BI.and_elim_r.trans BI.and_elim_l).trans <| UPred.cmraIncluded_elim a1 c'
+  let ha2 :
+      iOwn γ c' ∧ UPred.cmraIncluded a1 c' ∧ UPred.cmraIncluded a2 c' ⊢ ⌜a2 ≼ c'⌝ :=
+    (BI.and_elim_r.trans BI.and_elim_r).trans <| UPred.cmraIncluded_elim a2 c'
+  refine BI.pure_elim (✓{0} c') hvalid fun hv0 => ?_
+  refine BI.pure_elim (a1 ≼ c') ha1 fun h1 => ?_
+  refine BI.pure_elim (a2 ≼ c') ha2 fun h2 => ?_
+  exact False.elim <| Hincl c' (CMRA.discrete_valid hv0) h1 h2
+
 end iOwn
 end Iris
