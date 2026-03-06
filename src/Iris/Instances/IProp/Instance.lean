@@ -850,5 +850,62 @@ theorem iOwn_forall {B : Sort _} [Inhabited B] (γ : GName) (f : B → F.ap (IPr
             (iResProject_dist γ Hxf).trans <|
             (iResProject_iSingleton_op γ (f b) xf).dist
 
+theorem iOwn_and (γ : GName) (a1 a2 : F.ap (IProp GF)) :
+    iOwn γ a1 ∧ iOwn γ a2 ⊢
+      ∃ c : F.ap (IProp GF),
+        iOwn γ c ∧
+          (∃ q1 : Option (F.ap (IProp GF)), (UPred.eq c (a1 •? q1) : IProp GF)) ∧
+          ∃ q2 : Option (F.ap (IProp GF)), (UPred.eq c (a2 •? q2) : IProp GF) := by
+  let f : Bool → F.ap (IProp GF) := fun b => if b then a1 else a2
+  have hforall : iOwn γ a1 ∧ iOwn γ a2 ⊢ ∀ (b : Bool), iOwn γ (f b) := by
+    refine (and_forall_bool.1).trans ?_
+    refine forall_intro fun b => ?_
+    cases b
+    · simpa [f] using (forall_elim false)
+    · simpa [f] using (forall_elim true)
+  exact hforall.trans <| (iOwn_forall (γ := γ) (f := f)).trans <|
+    BI.exists_elim fun c =>
+      let Ψ : Bool → IProp GF := fun b =>
+        ∃ q : Option (F.ap (IProp GF)), (UPred.eq c (f b •? q) : IProp GF)
+      let hleft :
+          «forall» Ψ ⊢
+            ∃ q : Option (F.ap (IProp GF)), (UPred.eq c (a1 •? q) : IProp GF) := by
+            simpa [f] using
+              (BI.forall_elim (PROP := IProp GF) (Ψ := Ψ) true)
+      let hright :
+          «forall» Ψ ⊢
+            ∃ q : Option (F.ap (IProp GF)), (UPred.eq c (a2 •? q) : IProp GF) := by
+            simpa [f] using
+              (BI.forall_elim (PROP := IProp GF) (Ψ := Ψ) false)
+      BI.exists_intro' c <|
+        BI.and_intro BI.and_elim_l <|
+          BI.and_intro (BI.and_elim_r.trans hleft) (BI.and_elim_r.trans hright)
+
+theorem iOwn_forall_pred {B : Type _} (γ : GName) (φ : B → Prop) (f : B → F.ap (IProp GF))
+    (hφ : ∃ b, φ b) :
+    (∀ b, ⌜φ b⌝ → iOwn γ (f b)) ⊢
+      ∃ c, iOwn γ c ∧ ∀ b, ⌜φ b⌝ → ∃ q : Option (F.ap (IProp GF)),
+        (UPred.eq c (f b •? q) : IProp GF) := by
+  rcases hφ with ⟨b0, hb0⟩
+  letI : Inhabited { b : B // φ b } := ⟨⟨b0, hb0⟩⟩
+  let G : { b : B // φ b } → IProp GF := fun s => iOwn γ (f s.1)
+  have hsub :
+      (∀ b, ⌜φ b⌝ → iOwn γ (f b)) ⊢ «forall» G := by
+    refine BI.forall_intro fun s => ?_
+    exact BI.mp (BI.forall_elim s.1) (BI.pure_intro s.2)
+  exact hsub.trans <| (iOwn_forall (γ := γ) (f := fun s : { b : B // φ b } => f s.1)).trans <|
+    BI.exists_elim fun c =>
+      let Ψ : { b : B // φ b } → IProp GF := fun s =>
+        ∃ q : Option (F.ap (IProp GF)), (UPred.eq c (f s.1 •? q) : IProp GF)
+      BI.exists_intro' c <|
+        BI.and_intro BI.and_elim_l <|
+          BI.forall_intro fun b =>
+            BI.imp_intro <|
+              BI.pure_elim_r fun hb =>
+                BI.and_elim_r.trans <|
+                  by
+                    simpa [Ψ] using
+                      (BI.forall_elim (PROP := IProp GF) (Ψ := Ψ) ⟨b, hb⟩)
+
 end iOwn
 end Iris

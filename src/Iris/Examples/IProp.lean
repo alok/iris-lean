@@ -103,6 +103,17 @@ example {γ : GName} (s0 s1 : String) :
   iexists c
   iexact Hc
 
+example {γ : GName} (s0 s1 : String) :
+    iOwn (F := F1 (F := F)) γ (Frag 5 (own one) (toAgree (α := LeibnizO String) ⟨s0⟩)) ∧
+      iOwn (F := F1 (F := F)) γ (Frag 5 (own one) (toAgree (α := LeibnizO String) ⟨s1⟩)) ⊢
+      ∃ c : F1 (F := F).ap (IProp GF), iOwn (F := F1 (F := F)) γ c := by
+  iintro Hpair
+  ihave Hcommon := iOwn_and (GF := GF) (F := F1 (F := F)) (γ := γ) $$ Hpair
+  icases Hcommon with ⟨%c, Htail⟩
+  ihave Hc := (BI.and_elim_l (PROP := IProp GF)) $$ Htail
+  iexists c
+  iexact Hc
+
 end Example2
 
 /-! Example: a typical step-indexed weakest precondition -/
