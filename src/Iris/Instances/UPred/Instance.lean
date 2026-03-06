@@ -494,7 +494,33 @@ theorem bupd_ownM_updateP (x : M) (Φ : M → Prop) :
   · exists y
   · exact ⟨HΦy, CMRA.incN_op_left k y x3⟩
 
--- TODO: later_ownM, ownM_forall (needs internal eq)
+theorem later_ownM (a : M) :
+    ▷ ownM a ⊢ ∃ b, ownM b ∧ ▷ (UPred.eq a b : UPred M) := by
+  intro n x Hv Hax
+  cases n with
+  | zero =>
+      refine ⟨iprop(ownM (CMRA.unit : M) ∧ ▷ (UPred.eq a (CMRA.unit : M) : UPred M)), ?_, ?_⟩
+      · exists (CMRA.unit : M)
+      · exact ⟨CMRA.incN_unit, trivial⟩
+  | succ n =>
+      rcases Hax with ⟨y, Hy⟩
+      let ⟨a', y', Hx, Ha, _⟩ := CMRA.extend (CMRA.validN_succ Hv) Hy
+      refine ⟨iprop(ownM a' ∧ ▷ (UPred.eq a a' : UPred M)), ?_, ?_⟩
+      · exists a'
+      · exact ⟨⟨y', Hx.dist⟩, Ha.symm⟩
+
+theorem ownM_forall {A : Sort _} (f : A → M) :
+    (∀ a, ownM (f a)) ⊢ ∃ z, ownM z ∧ ∀ a, ∃ xf, (UPred.eq z (f a • xf) : UPred M) := by
+  intro n y Hv Hf
+  refine ⟨iprop(ownM y ∧ ∀ a, ∃ xf, (UPred.eq y (f a • xf) : UPred M)), ?_, ?_⟩
+  · exists y
+  · constructor
+    · exact CMRA.incN_refl y
+    · intro p hp
+      rcases hp with ⟨a, rfl⟩
+      rcases Hf _ ⟨a, rfl⟩ with ⟨xf, Hxf⟩
+      refine ⟨iprop(UPred.eq y (f a • xf) : UPred M), ?_, Hxf⟩
+      exact ⟨xf, rfl⟩
 
 theorem bupd_ownM_update (x y : M) :
     (x ~~> y) → ownM x ⊢ |==> ownM y := by
