@@ -7,6 +7,7 @@ import Iris.Algebra.Excl
 import Iris.Algebra.ExclAuth
 import Iris.Algebra.Frac
 import Iris.Algebra.FracAuth
+import Iris.Algebra.UFrac
 import Iris.Algebra.GenMap
 import Iris.Algebra.LocalUpdates
 import Iris.Algebra.IProp
