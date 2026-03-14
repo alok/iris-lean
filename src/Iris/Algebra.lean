@@ -12,6 +12,7 @@ import Iris.Algebra.UFracAuth
 import Iris.Algebra.GenMap
 import Iris.Algebra.LocalUpdates
 import Iris.Algebra.IProp
+import Iris.Algebra.MaxPrefixList
 import Iris.Algebra.MonoNumbers
 import Iris.Algebra.MonoInt
 import Iris.Algebra.MonoNat
