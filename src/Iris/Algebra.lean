@@ -15,6 +15,7 @@ import Iris.Algebra.IProp
 import Iris.Algebra.MaxPrefixList
 import Iris.Algebra.MonoNumbers
 import Iris.Algebra.MonoInt
+import Iris.Algebra.MonoList
 import Iris.Algebra.MonoNat
 import Iris.Algebra.OFE
 import Iris.Algebra.Updates
