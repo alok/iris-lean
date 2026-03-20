@@ -59,7 +59,7 @@ Some porting tasks will require other tasks as dependencies, the GitHub issues p
   - [ ] Updates
   - [x] Functors
 - [ ] `gmultiset.v` 
-  - [ ] CMRA
+  - [x] CMRA
   - [ ] Updates
 - [ ] `gset.v` 
   - [ ] CMRA

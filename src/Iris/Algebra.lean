@@ -10,6 +10,7 @@ import Iris.Algebra.FracAuth
 import Iris.Algebra.UFrac
 import Iris.Algebra.UFracAuth
 import Iris.Algebra.GenMap
+import Iris.Algebra.GMultiset
 import Iris.Algebra.LocalUpdates
 import Iris.Algebra.IProp
 import Iris.Algebra.MaxPrefixList
